@@ -1,4 +1,4 @@
-use cosmwasm_schema::{cw_serde, serde::ser::SerializeSeq};
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     to_binary, Addr, Api, Binary, CosmosMsg, IbcPacketAckMsg, IbcPacketTimeoutMsg, StdError,
     StdResult, Storage, SubMsgResponse, Uint64, WasmMsg,
