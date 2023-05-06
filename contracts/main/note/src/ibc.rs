@@ -1,9 +1,9 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    DepsMut, Env, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
-    IbcChannelOpenResponse, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse, Never, Reply, Response, SubMsg,
+    to_binary, DepsMut, Env, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
+    IbcChannelOpenMsg, IbcChannelOpenResponse, IbcPacketAckMsg, IbcPacketReceiveMsg,
+    IbcPacketTimeoutMsg, IbcReceiveResponse, Never, Reply, Response, SubMsg,
 };
 use polytone::{callback, handshake::note};
 
@@ -106,6 +106,7 @@ pub fn ibc_packet_ack(
     Ok(IbcBasicResponse::default()
         .add_attribute("method", "ibc_packet_ack")
         .add_attribute("sequence_number", ack.original_packet.sequence.to_string())
+        .add_attribute("callback", base64::encode(to_binary(&callback)?))
         .add_submessages(callback))
 }
 

@@ -23,6 +23,7 @@ cw-utils        = { workspace = true }
 cw2             = { workspace = true }
 thiserror       = { workspace = true }
 polytone        = { workspace = true }
+base64          = { workspace = true }
 
 [dev-dependencies]
 cw-multi-test = { workspace = true }

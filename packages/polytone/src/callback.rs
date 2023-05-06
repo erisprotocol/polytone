@@ -1,7 +1,7 @@
-use cosmwasm_schema::cw_serde;
+use cosmwasm_schema::{cw_serde, serde::ser::SerializeSeq};
 use cosmwasm_std::{
-    to_binary, Addr, Api, Binary, CosmosMsg, IbcPacketAckMsg, IbcPacketTimeoutMsg, StdResult,
-    Storage, SubMsgResponse, Uint64, WasmMsg,
+    to_binary, Addr, Api, Binary, CosmosMsg, IbcPacketAckMsg, IbcPacketTimeoutMsg, StdError,
+    StdResult, Storage, SubMsgResponse, Uint64, WasmMsg,
 };
 use cw_storage_plus::{Item, Map};
 
@@ -26,6 +26,8 @@ pub struct CallbackMessage {
     pub initiator_msg: Binary,
     /// Data from the host chain.
     pub result: Callback,
+    /// Original sequence id
+    pub sequence: u64,
 }
 
 #[cw_serde]
@@ -99,6 +101,13 @@ pub fn request_callback(
 
     if let Some(request) = request {
         let receiver = api.addr_validate(&request.receiver)?;
+
+        if receiver != initiator {
+            return Err(StdError::generic_err(
+                "Callback receiver must be the initiator.".to_string(),
+            ));
+        }
+
         let initiator_msg = request.msg;
 
         CALLBACKS.save(
@@ -116,7 +125,7 @@ pub fn request_callback(
     Ok(())
 }
 
-fn callback_msg(request: PendingCallback, result: Callback) -> CosmosMsg {
+fn callback_msg(request: PendingCallback, result: Callback, sequence: u64) -> CosmosMsg {
     /// Gives the executed message a "callback" tag:
     /// `{ "callback": CallbackMsg }`.
     #[cw_serde]
@@ -129,6 +138,7 @@ fn callback_msg(request: PendingCallback, result: Callback) -> CosmosMsg {
             initiator: request.initiator,
             initiator_msg: request.initiator_msg,
             result,
+            sequence,
         }))
         .expect("fields are known to be serializable"),
         funds: vec![],
@@ -156,7 +166,7 @@ pub fn on_ack(
             .save(storage, &request.initiator, executed_by)
             .expect("strings can be serialized");
     }
-    Some(callback_msg(request, result))
+    Some(callback_msg(request, result, original_packet.sequence))
 }
 
 /// Call on every packet timeout. Returns a callback message to execute,
@@ -177,7 +187,7 @@ pub fn on_timeout(
             error: timeout,
         })),
     };
-    Some(callback_msg(request, result))
+    Some(callback_msg(request, result, packet.sequence))
 }
 
 #[cw_serde]

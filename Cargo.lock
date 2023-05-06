@@ -495,6 +495,7 @@ name = "polytone-note"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "base64",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test",
